@@ -60,7 +60,87 @@ We'll use Neon's free tier for PostgreSQL:
 4. Copy the connection string (starts with `postgresql://`)
 5. Save it - you'll need it for environment variables
 
-### Step 3: Deploy to Vercel (10 minutes)
+### Step 3: Configure OAuth Providers (20 minutes)
+
+Set up your OAuth credentials BEFORE deploying so you have all environment variables ready.
+
+#### Generate NextAuth Secret:
+
+```bash
+openssl rand -base64 32
+```
+
+Save this value - you'll need it for `NEXTAUTH_SECRET`.
+
+#### Google OAuth:
+
+1. Go to https://console.cloud.google.com
+2. Select your project (or create new one: "Executive Secretary Production")
+3. Go to "APIs & Services" → "Credentials"
+4. Click "Create Credentials" → "OAuth 2.0 Client ID"
+5. Application type: "Web application"
+6. Name: "Executive Secretary Production"
+7. **Authorized redirect URIs** (you'll add your actual Vercel URL later, but set up the client now):
+   ```
+   http://localhost:3000/api/auth/callback/google
+   ```
+   (You'll update this with production URL after deploying)
+
+8. Click "Create"
+9. **Save these values**:
+   - Client ID: `GOOGLE_CLIENT_ID`
+   - Client Secret: `GOOGLE_CLIENT_SECRET`
+
+10. **Configure OAuth Consent Screen**:
+    - Go to "OAuth consent screen"
+    - User Type: "External"
+    - Fill in app name: "Executive Secretary"
+    - User support email: your email
+    - Developer contact: your email
+    - Save
+
+#### Microsoft OAuth (Optional - for Outlook support):
+
+1. Go to https://portal.azure.com
+2. Navigate to "Azure Active Directory" → "App registrations"
+3. Click "New registration"
+4. Name: "Executive Secretary Production"
+5. Supported account types: "Accounts in any organizational directory"
+6. Redirect URI: Web, `http://localhost:3000/api/auth/callback/azure-ad`
+7. Register
+8. **Save these values**:
+   - Application (client) ID: `MICROSOFT_CLIENT_ID`
+9. Go to "Certificates & secrets" → "New client secret"
+10. Description: "Production secret"
+11. Expires: 24 months
+12. **Save this value**: `MICROSOFT_CLIENT_SECRET`
+
+#### Aurinko Calendar API:
+
+1. Go to https://aurinko.io
+2. Sign up/log in
+3. Create a new application:
+   - Name: "Executive Secretary Production"
+4. **Save these values**:
+   - Client ID: `AURINKO_CLIENT_ID`
+   - Client Secret: `AURINKO_CLIENT_SECRET`
+   - App Secret: `AURINKO_APP_SECRET`
+5. Add callback URL (you'll update with production URL after deploying):
+   ```
+   http://localhost:3000/api/calendar/callback
+   ```
+
+#### Anthropic API:
+
+1. Go to https://console.anthropic.com
+2. Sign up/log in
+3. Go to "API Keys"
+4. Create a new key
+5. **Save this value**: `ANTHROPIC_API_KEY` (starts with `sk-ant-`)
+
+**Keep all these credentials handy** - you'll add them to Vercel in the next step.
+
+### Step 4: Deploy to Vercel (10 minutes)
 
 1. Go to https://vercel.com
 2. Sign up/log in with GitHub
@@ -76,10 +156,10 @@ We'll use Neon's free tier for PostgreSQL:
    Click "Environment Variables" and add these (click "Add" after each):
 
    ```
-   DATABASE_URL = postgresql://your-neon-connection-string
+   DATABASE_URL = postgresql://your-neon-connection-string-from-step-2
 
    NEXTAUTH_URL = https://your-app.vercel.app
-   NEXTAUTH_SECRET = [generate with: openssl rand -base64 32]
+   NEXTAUTH_SECRET = [the value you generated in Step 3]
 
    GOOGLE_CLIENT_ID = [from Google Cloud Console]
    GOOGLE_CLIENT_SECRET = [from Google Cloud Console]
@@ -88,7 +168,7 @@ We'll use Neon's free tier for PostgreSQL:
    AURINKO_CLIENT_SECRET = [from Aurinko dashboard]
    AURINKO_APP_SECRET = [from Aurinko dashboard]
 
-   ANTHROPIC_API_KEY = sk-ant-[your-key]
+   ANTHROPIC_API_KEY = [from Anthropic console]
    ```
 
    **Optional (for Outlook support):**
@@ -101,56 +181,48 @@ We'll use Neon's free tier for PostgreSQL:
 8. Wait 2-3 minutes for the build to complete
 9. You'll get a URL like `https://executive-secretary-abc123.vercel.app`
 
-### Step 4: Configure OAuth Providers for Production (15 minutes)
+### Step 5: Update OAuth Redirect URIs (10 minutes)
+
+Now that you have your Vercel URL, update all OAuth providers with the production redirect URIs:
 
 #### Google OAuth:
 
 1. Go to https://console.cloud.google.com
-2. Select your project (or create new one)
+2. Select your project
 3. Go to "APIs & Services" → "Credentials"
-4. Click on your OAuth 2.0 Client ID
+4. Click on your OAuth 2.0 Client ID (the one you created in Step 3)
 5. Add **Authorized redirect URIs**:
    ```
    https://your-app.vercel.app/api/auth/callback/google
    ```
-   (Replace `your-app.vercel.app` with your actual Vercel URL)
+   (Replace `your-app.vercel.app` with your actual Vercel URL from Step 4)
 
-6. If using a custom domain, also add:
-   ```
-   https://yourdomain.com/api/auth/callback/google
-   ```
-
-7. **Update OAuth Consent Screen**:
-   - Go to "OAuth consent screen"
-   - Add your production domain to "Authorized domains"
-   - If you want public access (not just test users):
-     - Submit app for verification (required for production use)
-     - Or keep in testing mode and manually add users
+6. Click "Save"
 
 #### Microsoft OAuth (if using):
 
 1. Go to https://portal.azure.com
 2. Navigate to "Azure Active Directory" → "App registrations"
-3. Select your app
+3. Select your app (created in Step 3)
 4. Go to "Authentication"
-5. Add redirect URIs:
+5. Add redirect URI:
    ```
    https://your-app.vercel.app/api/auth/callback/azure-ad
-   https://yourdomain.com/api/auth/callback/azure-ad  (if using custom domain)
    ```
+6. Save
 
 #### Aurinko Calendar API:
 
 1. Go to https://aurinko.io
 2. Sign in to your account
-3. Go to your application settings
-4. Update callback URLs:
+3. Go to your application settings (created in Step 3)
+4. Update callback URL:
    ```
    https://your-app.vercel.app/api/calendar/callback
-   https://yourdomain.com/api/calendar/callback  (if using custom domain)
    ```
+5. Save
 
-### Step 5: Initialize Database (5 minutes)
+### Step 6: Initialize Database (5 minutes)
 
 1. In your Vercel dashboard, go to your project
 2. Click "Settings" → "General" → scroll to "Build & Development Settings"
@@ -179,7 +251,7 @@ We'll use Neon's free tier for PostgreSQL:
    DATABASE_URL="postgresql://..." npx prisma studio
    ```
 
-### Step 6: Test Your Deployment (10 minutes)
+### Step 7: Test Your Deployment (10 minutes)
 
 1. Visit your Vercel URL: `https://your-app.vercel.app`
 2. Click "Admin Portal" → "Sign in"
