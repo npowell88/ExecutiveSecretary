@@ -1,0 +1,238 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Wards - Each ward is a separate organization
+model Ward {
+  id              String            @id @default(cuid())
+  name            String
+  stake           String?
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+
+  users           User[]
+  bishopricMembers BishopricMember[]
+  interviewTypes  InterviewType[]
+  appointments    Appointment[]
+
+  @@index([name])
+}
+
+enum UserRole {
+  EXECUTIVE_SECRETARY
+  BISHOPRIC
+  MEMBER
+}
+
+// Users - Can be Executive Secretary, Bishopric members, or ward members
+model User {
+  id                String              @id @default(cuid())
+  email             String              @unique
+  name              String?
+  role              UserRole
+  wardId            String
+  ward              Ward                @relation(fields: [wardId], references: [id], onDelete: Cascade)
+
+  // OAuth fields
+  googleId          String?             @unique
+  microsoftId       String?             @unique
+  image             String?
+
+  // Calendar connection
+  calendarConnection CalendarConnection?
+
+  // If bishopric member
+  bishopricMember   BishopricMember?
+
+  // Appointments made (for ward members)
+  appointments      Appointment[]
+
+  // Session data
+  accounts          Account[]
+  sessions          Session[]
+
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+
+  @@index([wardId, role])
+  @@index([email])
+}
+
+enum BishopricPosition {
+  BISHOP
+  FIRST_COUNSELOR
+  SECOND_COUNSELOR
+}
+
+// Bishopric Members - Leaders who conduct interviews
+model BishopricMember {
+  id                String              @id @default(cuid())
+  position          BishopricPosition
+  userId            String              @unique
+  user              User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  wardId            String
+  ward              Ward                @relation(fields: [wardId], references: [id], onDelete: Cascade)
+
+  // Which interview types this member can conduct
+  interviewTypes    InterviewType[]
+
+  // Appointments scheduled with this member
+  appointments      Appointment[]
+
+  // Calendar availability code (e.g., "BISHOP-AVAIL" that they put in their calendar)
+  availabilityCode  String              @default("INTERVIEW-AVAIL")
+
+  isActive          Boolean             @default(true)
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+
+  @@unique([wardId, position])
+  @@index([wardId, isActive])
+}
+
+// Interview Types - Different types of interviews (e.g., Temple Recommend, Youth Interview)
+model InterviewType {
+  id                String              @id @default(cuid())
+  name              String
+  description       String?
+  duration          Int                 @default(30) // in minutes
+  wardId            String
+  ward              Ward                @relation(fields: [wardId], references: [id], onDelete: Cascade)
+
+  // Which bishopric positions can conduct this interview
+  bishopricMembers  BishopricMember[]
+
+  appointments      Appointment[]
+
+  isActive          Boolean             @default(true)
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+
+  @@index([wardId, isActive])
+}
+
+enum AppointmentStatus {
+  SCHEDULED
+  COMPLETED
+  CANCELLED
+  RESCHEDULED
+}
+
+// Appointments - Scheduled interviews
+model Appointment {
+  id                String              @id @default(cuid())
+
+  // Ward member info (may or may not have User account)
+  userId            String?
+  user              User?               @relation(fields: [userId], references: [id], onDelete: SetNull)
+  memberName        String
+  memberEmail       String
+  memberPhone       String?
+
+  // Interview details
+  interviewTypeId   String
+  interviewType     InterviewType       @relation(fields: [interviewTypeId], references: [id])
+
+  bishopricMemberId String
+  bishopricMember   BishopricMember     @relation(fields: [bishopricMemberId], references: [id])
+
+  wardId            String
+  ward              Ward                @relation(fields: [wardId], references: [id], onDelete: Cascade)
+
+  // Scheduling
+  startTime         DateTime
+  endTime           DateTime
+  status            AppointmentStatus   @default(SCHEDULED)
+
+  // Calendar event IDs (for syncing)
+  bishopricEventId  String?             // Event ID in bishopric member's calendar
+  memberEventId     String?             // Event ID in member's calendar (if they have one)
+  execSecEventId    String?             // Event ID in exec secretary's calendar
+
+  // Notes
+  notes             String?
+  cancellationReason String?
+
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+
+  @@index([wardId, status, startTime])
+  @@index([bishopricMemberId, startTime])
+  @@index([memberEmail])
+}
+
+enum CalendarProvider {
+  GOOGLE
+  MICROSOFT
+}
+
+// Calendar Connections - OAuth tokens for calendar access
+model CalendarConnection {
+  id                String              @id @default(cuid())
+  userId            String              @unique
+  user              User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  provider          CalendarProvider
+
+  // Aurinko account ID
+  aurinkoAccountId  String              @unique
+
+  // OAuth tokens (encrypted in production)
+  accessToken       String              @db.Text
+  refreshToken      String?             @db.Text
+  expiresAt         DateTime?
+
+  email             String
+
+  isActive          Boolean             @default(true)
+  lastSyncedAt      DateTime?
+
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+
+  @@index([userId, isActive])
+}
+
+// NextAuth.js required models
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
