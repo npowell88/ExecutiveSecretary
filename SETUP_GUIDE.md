@@ -43,8 +43,10 @@ We'll use Neon (free tier) for PostgreSQL:
    # NextAuth - Your app URL
    NEXTAUTH_URL="http://localhost:3000"
 
-   # Generate a secret (run this command and paste the output):
-   # openssl rand -base64 32
+   # Generate a secret:
+   # Mac/Linux: openssl rand -base64 32
+   # Windows (PowerShell): -join ((48..57) + (65..90) + (97..122) | Get-Random -Count 32 | ForEach-Object {[char]$_})
+   # Or use: https://generate-secret.vercel.app/32
    NEXTAUTH_SECRET="paste-generated-secret-here"
    ```
 
