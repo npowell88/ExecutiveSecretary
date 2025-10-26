@@ -66,9 +66,19 @@ Set up your OAuth credentials BEFORE deploying so you have all environment varia
 
 #### Generate NextAuth Secret:
 
+**On Mac/Linux:**
 ```bash
 openssl rand -base64 32
 ```
+
+**On Windows (PowerShell):**
+```powershell
+-join ((48..57) + (65..90) + (97..122) | Get-Random -Count 32 | ForEach-Object {[char]$_})
+```
+
+**Or use an online generator:**
+- Visit: https://generate-secret.vercel.app/32
+- Click "Generate" and copy the result
 
 Save this value - you'll need it for `NEXTAUTH_SECRET`.
 
