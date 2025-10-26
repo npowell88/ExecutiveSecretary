@@ -11,7 +11,7 @@ export default function HomePage() {
           Intelligent scheduling for bishopric interviews
         </p>
 
-        <div className="grid md:grid-cols-2 gap-6">
+        <div className="grid md:grid-cols-2 gap-6 mb-8">
           <Link
             href="/schedule"
             className="block p-8 bg-white rounded-lg shadow-lg hover:shadow-xl transition-shadow border border-gray-200"
@@ -35,6 +35,18 @@ export default function HomePage() {
               Executive Secretary: Manage ward, bishopric, and appointments
             </p>
           </Link>
+        </div>
+
+        <div className="text-center">
+          <Link
+            href="/register"
+            className="inline-block px-8 py-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg shadow-lg hover:shadow-xl transition-shadow font-semibold"
+          >
+            Register Your Ward
+          </Link>
+          <p className="mt-3 text-sm text-gray-500">
+            New to Executive Secretary? Set up your ward in minutes
+          </p>
         </div>
 
         <div className="mt-12 text-sm text-gray-500">

@@ -13,7 +13,24 @@ Executive Secretary is an intelligent appointment scheduling system for LDS ward
 
 ## Choose Your Path
 
-### 🚀 I want to deploy this for my ward (Production)
+### 🎯 I want to register my ward on an existing deployment (Easiest)
+
+**If someone has already deployed Executive Secretary and shared it with you:**
+
+1. Visit the deployment URL (e.g., `https://executivesecretary.org`)
+2. Click "Register Your Ward"
+3. Fill in:
+   - Your ward name
+   - Your stake name
+   - Your email (as Executive Secretary)
+4. Sign in with Google or Microsoft
+5. Done! You're now set up and can configure your ward
+
+**Time**: ~2 minutes
+
+---
+
+### 🚀 I want to deploy this system (For System Administrators)
 
 **👉 Start here: [DEPLOYMENT_GUIDE.md](DEPLOYMENT_GUIDE.md)**
 
@@ -21,10 +38,11 @@ This will walk you through:
 1. Creating necessary accounts (all with free tiers)
 2. Deploying to Vercel (takes ~45 minutes)
 3. Configuring OAuth and API integrations
-4. Setting up your ward and bishopric members
-5. Going live!
+4. Registering your ward through the web interface
+5. Other wards can then self-register on your deployment!
 
 **Cost**: ~$5-10/month (only for AI API, everything else is free)
+**Time**: ~1 hour initial setup
 
 ---
 
@@ -98,7 +116,7 @@ A: No! Ward members just chat with the AI and provide their name and email.
 A: They create recurring calendar events (like "INTERVIEW-AVAIL") in their Google/Outlook calendar. The app automatically detects these as available time slots.
 
 **Q: Can this work for multiple wards?**
-A: Yes! The database is designed for multi-ward support. Currently, each deployment supports one ward, but the architecture allows for expansion.
+A: Yes! The system is multi-tenant - one deployment can serve multiple wards. Each ward registers through the "/register" page and gets their own isolated data, but all share the same application instance.
 
 **Q: What if someone needs to reschedule?**
 A: Currently, they would need to schedule a new appointment. A rescheduling feature is planned for a future update.

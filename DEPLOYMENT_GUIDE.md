@@ -222,11 +222,9 @@ Now that you have your Vercel URL, update all OAuth providers with the productio
    ```
 5. Save
 
-### Step 6: Initialize Database (5 minutes)
+### Step 6: Initialize Database Schema (2 minutes)
 
-1. In your Vercel dashboard, go to your project
-2. Click "Settings" → "General" → scroll to "Build & Development Settings"
-3. Or use Vercel CLI:
+1. **Push database schema** using Vercel CLI:
 
    ```bash
    npm i -g vercel
@@ -235,30 +233,57 @@ Now that you have your Vercel URL, update all OAuth providers with the productio
    vercel env pull .env.production
    ```
 
-4. **Push database schema**:
+2. **Push the schema to your production database**:
    ```bash
-   # Using the production database URL
-   DATABASE_URL="postgresql://..." npx prisma db push
+   # Using the production database URL from .env.production
+   npx prisma db push
    ```
 
-5. **Create your first user**:
-   ```bash
-   DATABASE_URL="postgresql://..." npm run setup "Your Ward" "Your Stake" "your-email@gmail.com"
-   ```
+**Note**: You do NOT need to manually create ward/user records anymore - wards can self-register through the web interface!
 
-   Or use Prisma Studio:
-   ```bash
-   DATABASE_URL="postgresql://..." npx prisma studio
-   ```
+### Step 7: Register Your Ward (2 minutes)
 
-### Step 7: Test Your Deployment (10 minutes)
+Now that the app is deployed, register your ward through the web interface:
 
 1. Visit your Vercel URL: `https://your-app.vercel.app`
-2. Click "Admin Portal" → "Sign in"
-3. Sign in with Google using your email
-4. Configure your ward settings
-5. Connect your calendar
+2. Click "Register Your Ward"
+3. Fill in:
+   - Ward Name (e.g., "Pleasant Grove 1st Ward")
+   - Stake Name (e.g., "Pleasant Grove Stake")
+   - Your Email (Executive Secretary)
+4. Click "Continue to Sign In"
+5. Sign in with Google (or Microsoft)
+6. You'll be automatically set up as the Executive Secretary!
+
+**Alternative - Manual Setup** (if you prefer):
+
+If you want to create wards manually via command line:
+
+```bash
+DATABASE_URL="postgresql://..." npm run setup "Your Ward" "Your Stake" "your-email@gmail.com"
+```
+
+Or use Prisma Studio:
+```bash
+DATABASE_URL="postgresql://..." npx prisma studio
+```
+
+### Step 8: Test Your Deployment (10 minutes)
+
+1. Visit your Vercel URL: `https://your-app.vercel.app`
+2. You should already be signed in from Step 7
+3. Go to "Admin Portal"
+4. Connect your calendar (Calendar → Connect Google Calendar)
+5. Add bishopric members
 6. Test the scheduling flow at `/schedule`
+
+**For Additional Wards**:
+
+When other wards want to use your deployment, they simply:
+1. Visit `https://your-app.vercel.app`
+2. Click "Register Your Ward"
+3. Fill in their ward info and sign in
+4. They're automatically set up - no manual intervention needed!
 
 ---
 
